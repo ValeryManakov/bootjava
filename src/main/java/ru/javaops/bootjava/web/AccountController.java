@@ -31,6 +31,7 @@ public class AccountController {
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public User get(@AuthenticationPrincipal AuthUser authUser) {
         log.info("get {}", authUser);
+        if (true) throw new RuntimeException();
         return authUser.getUser();
     }
 
