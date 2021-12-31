@@ -22,9 +22,7 @@ import ru.javaops.bootjava.util.ValidationUtil;
 
 import javax.validation.Valid;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.EnumSet;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
@@ -67,12 +65,12 @@ public class AccountController implements RepresentationModelProcessor<Repositor
         userRepository.deleteById(authUser.id());
     }
 
-    @PostMapping(value = "/register", consumes = MediaTypes.HAL_JSON_VALUE)
+    @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(value = HttpStatus.CREATED)
     public ResponseEntity<EntityModel<User>> register(@Valid @RequestBody User user) {
         log.info("register {}", user);
         ValidationUtil.checkNew(user);
-        user.setRoles(new HashSet(Arrays.asList(Role.USER)));
+        user.setRoles(EnumSet.of(Role.USER));
         user = userRepository.save(user);
         URI uriOfNewResource = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/api/account")
