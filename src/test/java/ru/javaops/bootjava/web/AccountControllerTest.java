@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import ru.javaops.bootjava.UserTestUtil;
@@ -29,7 +30,8 @@ class AccountControllerTest extends AbstractControllerTest {
         perform(MockMvcRequestBuilders.get(URL))
                 .andExpect(status().isOk())
                 .andDo(print())
-                .andExpect(content().contentTypeCompatibleWith(MediaTypes.HAL_JSON_VALUE));
+                .andExpect(content().contentTypeCompatibleWith(MediaTypes.HAL_JSON_VALUE))
+                .andExpect(jsonMatcher(user, UserTestUtil::assertEquals));
     }
 
     @Test
@@ -50,10 +52,14 @@ class AccountControllerTest extends AbstractControllerTest {
     @Test
     void register() throws Exception {
         User newUser = UserTestUtil.getNew();
-        perform(MockMvcRequestBuilders.post(URL + "/register")
+        User registered = asUser(perform(MockMvcRequestBuilders.post(URL + "/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(writeValue(newUser)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated()).andReturn());
+        int newId = registered.id();
+        newUser.setId(newId);
+        UserTestUtil.assertEquals(registered, newUser);
+        UserTestUtil.assertEquals(registered, userRepository.findById(newId).orElseThrow(() -> new UsernameNotFoundException("User '" + newId + "' was not found")));
     }
 
     @Test
@@ -65,5 +71,6 @@ class AccountControllerTest extends AbstractControllerTest {
                 .content(writeValue(updated)))
                 .andDo(print())
                 .andExpect(status().isNoContent());
+        UserTestUtil.assertEquals(updated, userRepository.findById(USER_ID).orElseThrow(() -> new UsernameNotFoundException("User '" + USER_ID + "' was not found")));
     }
 }
